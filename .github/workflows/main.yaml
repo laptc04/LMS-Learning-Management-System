@@ -1,0 +1,26 @@
+name: LMS manegement Deployment
+
+on:
+  push:
+    branches: [production]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy using ssh key
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 24700
+          timeout: 1800s # 10 phút, hoặc bạn có thể để 1800 (30 phút)
+          script: |
+            cd /root/services/ISC-LMS/ISC-LMS-Group-1
+            git fetch origin
+            git checkout production
+            git pull
+            sudo docker build -t lmsmanagement .
+            sudo docker ps -q -f name=lmsmanagement && sudo docker stop lmsmanagement && sudo docker rm lmsmanagement || true
+            sudo docker run -d --name lmsmanagement -p 4000:3000 lmsmanagement
